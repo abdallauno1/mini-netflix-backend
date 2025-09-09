@@ -1,0 +1,35 @@
+---
+- hosts: web
+  become: true
+  vars:
+    app_image: "ghcr.io/USERNAME/mini-netflix:latest"
+    container_name: "mini-netflix"
+    host_port: 80
+    container_port: 8000
+  tasks:
+    - name: Install Docker (Amazon Linux 2/2023)
+      package:
+        name: docker
+        state: present
+    - name: Ensure Docker service is enabled and started
+      service:
+        name: docker
+        state: started
+        enabled: yes
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+    - name: Pull application image
+      community.docker.docker_image:
+        name: "{{ app_image }}"
+        source: pull
+    - name: Ensure container is running
+      community.docker.docker_container:
+        name: "{{ container_name }}"
+        image: "{{ app_image }}"
+        state: started
+        restart_policy: always
+        published_ports:
+          - "{{ host_port }}:{{ container_port }}"
