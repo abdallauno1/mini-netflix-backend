@@ -17,7 +17,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
       - name: Lint
-        run: 
+        run: |
           ruff check --fix backend tests
           ruff format backend tests
       - name: Run tests
