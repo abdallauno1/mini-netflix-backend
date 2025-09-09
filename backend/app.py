@@ -16,7 +16,7 @@ app = FastAPI(title="Mini Netflix Backend", version="0.1.0")
 security = HTTPBearer()
 
 
-#  DB session dependency 
+# DB session dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -27,7 +27,7 @@ def get_db():
 
 # Startup: create tables + seed movies 
 @app.on_event("startup")
-def on_startup() -> None:
+def on_startup():
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
     try:
@@ -90,15 +90,9 @@ def health():
 def signup(req: SignupRequest, db: Session = Depends(get_db)):
     exists = db.query(User).filter(User.username == req.username).first()
     if exists:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already exists",
-        )
+        raise HTTPException(status_code=400, detail="Username already exists")
 
-    user = User(
-        username=req.username,
-        password_hash=hash_password(req.password),
-    )
+    user = User(username=req.username, password_hash=hash_password(req.password))
     db.add(user)
     db.commit()
     return {"message": "user created"}
@@ -108,10 +102,7 @@ def signup(req: SignupRequest, db: Session = Depends(get_db)):
 def login(req: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.username == req.username).first()
     if not user or not verify_password(req.password, user.password_hash):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token(user.username)
     return {"access_token": token, "token_type": "bearer"}
@@ -127,5 +118,5 @@ def list_movies(
     current: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    rows = db.query(Movie).all()
-    return [{"id": m.id, "title": m.title, "year": m.year} for m in rows]
+    items = db.query(Movie).all()
+    return [{"id": m.id, "title": m.title, "year": m.year} for m in items]

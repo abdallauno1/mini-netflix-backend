@@ -21,6 +21,6 @@ jobs:
           ruff check --fix backend tests
           ruff format backend tests
       - name: Run tests
-        run: pytest -q
+        run: PYTHONPATH=$PWD pytest -q
       - name: Build Docker image
         run: docker build -t mini-netflix:${{ github.sha }} .
