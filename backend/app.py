@@ -40,23 +40,38 @@ def get_current_user(creds: HTTPAuthorizationCredentials=Depends(security), db: 
     if not user:
         raise HTTPException(status_code=401, detail='User not found')
     return user
+
+
 @app.get('/health')
 def health(): return {'status':'ok'}
-@app.post('/signup')
-def signup(req:SignupRequest, db:Session=Depends(get_db)):
-    if db.query(User).filter(User.username==req.username).first():
-        raise HTTPException(status_code=400, detail='Username already exists')
-    user=User(username=req.username, password_hash=hash_password(req.password))
-    db.add(user); db.commit(); return {'message':'user created'}
-@app.post('/login')
-def login(req:LoginRequest, db:Session=Depends(get_db)):
-    user=db.query(User).filter(User.username==req.username).first()
+
+
+@app.post("/signup")
+def signup(req: SignupRequest, db: Session = Depends(get_db)):
+    if db.query(User).filter(User.username == req.username).first():
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    user = User(username=req.username, password_hash=hash_password(req.password))
+    db.add(user)
+    db.commit()
+    return {"message": "user created"}
+
+
+@app.post("/login")
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == req.username).first()
     if not user or not verify_password(req.password, user.password_hash):
-        raise HTTPException(status_code=401, detail='Invalid credentials')
-    token=create_access_token(user.username); return {'access_token':token, 'token_type':'bearer'}
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
+    token = create_access_token(user.username)
+    return {"access_token": token, "token_type": "bearer"}
+
+
 @app.get('/me')
 def me(current=Depends(get_current_user)):
     return {'username': current.username}
+
+
 @app.get('/movies')
 def movies(current=Depends(get_current_user), db:Session=Depends(get_db)):
     return [{'id':m.id,'title':m.title,'year':m.year} for m in db.query(Movie).all()]
